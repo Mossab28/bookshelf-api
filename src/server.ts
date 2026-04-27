@@ -11,47 +11,27 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "..", "public")));
 
-// Health check
+// BookShelf app — served under /bookshelf
+const bookshelfRouter = express.Router();
+bookshelfRouter.use(express.static(path.join(__dirname, "..", "public")));
+bookshelfRouter.use("/api/auth", authRoutes);
+bookshelfRouter.use("/api/rooms", roomRoutes);
+bookshelfRouter.use("/api/bookings", bookingRoutes);
+bookshelfRouter.get("/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+app.use("/bookshelf", bookshelfRouter);
+
+// Projects hub at root
+app.get("/", (_req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public", "hub.html"));
+});
+
+// Health check global
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
-
-// API docs at root
-app.get("/", (_req, res) => {
-  res.json({
-    name: "BookShelf API",
-    version: "1.0.0",
-    description: "Room booking management REST API",
-    endpoints: {
-      auth: {
-        "POST /api/auth/register": "Create account (email, password, name)",
-        "POST /api/auth/login": "Login (email, password) → JWT token",
-      },
-      rooms: {
-        "GET /api/rooms": "List all rooms (?capacity=&floor=)",
-        "GET /api/rooms/:id": "Room details + upcoming bookings",
-        "POST /api/rooms": "Create room (admin only)",
-        "PATCH /api/rooms/:id": "Update room (admin only)",
-        "DELETE /api/rooms/:id": "Soft-delete room (admin only)",
-      },
-      bookings: {
-        "GET /api/bookings": "List bookings (?mine=true&roomId=&from=&to=)",
-        "GET /api/bookings/:id": "Booking details",
-        "POST /api/bookings": "Create booking (conflict detection)",
-        "POST /api/bookings/:id/cancel": "Cancel booking",
-        "GET /api/bookings/room/:roomId/availability": "Room availability (?date=)",
-      },
-    },
-    health: "GET /health",
-  });
-});
-
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/rooms", roomRoutes);
-app.use("/api/bookings", bookingRoutes);
 
 // Error handler
 app.use(errorHandler);

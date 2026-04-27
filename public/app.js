@@ -1,4 +1,4 @@
-const API = "";
+const API = "/bookshelf";
 let token = localStorage.getItem("token");
 let currentUser = JSON.parse(localStorage.getItem("user") || "null");
 let authMode = "login";
