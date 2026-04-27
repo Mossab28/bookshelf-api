@@ -1,0 +1,39 @@
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgresql://bookshelf:bookshelf@db:5432/bookshelf
+      JWT_SECRET: ${JWT_SECRET:-bookshelf-prod-secret-change-me-32chars!}
+      PORT: "4000"
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bookshelf
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bookshelf
+      POSTGRES_PASSWORD: bookshelf
+      POSTGRES_DB: bookshelf
+    volumes:
+      - bookshelf_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bookshelf"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bookshelf
+
+volumes:
+  bookshelf_pgdata:
+
+networks:
+  bookshelf:
